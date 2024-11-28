@@ -52,9 +52,10 @@ target_link_libraries(tests gtest gtest_main CommonLib TestsLib)
 add_custom_target(run_tests
     COMMAND ./tests
     DEPENDS tests
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bins
 )
 gtest_discover_tests(tests)
 
 # Executables
 add_executable_custom(sus "src/main.c")
+add_executable_custom(client "src/client/main.c")
