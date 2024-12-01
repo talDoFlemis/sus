@@ -18,10 +18,12 @@ typedef struct Reception {
   ReceptionMode mode;
   uint8_t remaining_clients_on_queue;
   uint8_t queue_size;
+  char *path_to_client_process;
 } Reception;
 
 Reception *create_new_reception(uint64_t number_of_clients,
-                                uint8_t max_number_of_processes);
+                                uint8_t max_number_of_processes,
+                                char *path_to_client_process);
 
 void *start_reception(Reception *self);
 

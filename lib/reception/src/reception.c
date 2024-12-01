@@ -9,7 +9,7 @@
 #include <time.h>
 #include <unistd.h>
 
-ClientProcess create_client_process() {
+ClientProcess create_client_process(Reception *self) {
   int random_number = (double)rand() / (double)RAND_MAX;
   ClientPriority client_priority;
 
@@ -27,8 +27,7 @@ ClientProcess create_client_process() {
 
   // Child process
   if (pid == 0) {
-    // TODO: change this to binary of client
-    int exec_status = execv("/bin/bash", NULL);
+    int exec_status = execv(self->path_to_client_process, NULL);
     assert(exec_status != 0 && "failed to exec client process");
 
     exit(EXIT_SUCCESS);
@@ -56,7 +55,8 @@ ClientProcess create_client_process() {
 }
 
 Reception *create_new_reception(uint64_t number_of_clients,
-                                uint8_t max_number_of_processes) {
+                                uint8_t max_number_of_processes,
+                                char *path_to_client_process) {
   assert(number_of_clients >= 0 &&
          "number of clients should be greater than or equal to 0");
   assert(max_number_of_processes >= 1 &&
@@ -82,6 +82,7 @@ Reception *create_new_reception(uint64_t number_of_clients,
   reception->number_of_clients = number_of_clients;
   reception->mode = mode;
   reception->queue_size = size_of_queue;
+  reception->path_to_client_process = path_to_client_process;
 
   return reception;
 };
@@ -91,7 +92,7 @@ void add_new_client_process(Reception *self) {}
 void *start_reception(Reception *self) {
   if (self->mode == Batch) {
     for (int i = 0; i < self->queue_size; i++) {
-      self->queue[i] = create_client_process();
+      self->queue[i] = create_client_process(self);
       self->remaining_clients_on_queue++;
       self->number_of_clients--;
     }
@@ -105,7 +106,7 @@ void *start_reception(Reception *self) {
 
   } else {
     for (int i = 0; i < self->queue_size; i++) {
-      self->queue[i] = create_client_process();
+      self->queue[i] = create_client_process(self);
       self->remaining_clients_on_queue++;
     }
 
