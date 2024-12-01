@@ -91,7 +91,7 @@ _deps
 .cache
 
 
-sus
+/sus
 bins/**
 /cli
 tests*

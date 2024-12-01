@@ -57,6 +57,6 @@ add_custom_target(run_tests
 gtest_discover_tests(tests)
 
 # Executables
-add_executable_custom(sus "src/main.c")
+add_executable_custom(sus "src/sus/main.c" "src/sus/cli.c")
 add_executable_custom(client "src/client/main.c")
 add_executable_custom(cleaner "src/cleaner/main.c")
