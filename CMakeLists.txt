@@ -59,3 +59,4 @@ gtest_discover_tests(tests)
 # Executables
 add_executable_custom(sus "src/main.c")
 add_executable_custom(client "src/client/main.c")
+add_executable_custom(cleaner "src/cleaner/main.c")
