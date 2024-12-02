@@ -45,7 +45,8 @@ ClientProcess create_client_process(Reception *self) {
 
     int time_to_attend;
     int fscanf_status = fscanf(demanda, "%d", &time_to_attend);
-    assert(fscanf_status == 1 && "failed to read single integer from demanda file");
+    assert(fscanf_status == 1 &&
+           "failed to read single integer from demanda file");
 
     client_process.time_to_attend = time_to_attend;
     get_now(&client_process.ts);
@@ -89,6 +90,12 @@ Reception *create_new_reception(uint64_t number_of_clients,
 
 void add_new_client_process(Reception *self) {}
 
+void *thread_wrapper(void *ptr) {
+  Reception *self = (Reception *)ptr;
+  start_reception(self);
+  return NULL;
+}
+
 void *start_reception(Reception *self) {
   if (self->mode == Batch) {
     for (int i = 0; i < self->queue_size; i++) {
@@ -125,8 +132,8 @@ void *start_reception(Reception *self) {
 pthread_t spawn_reception_thread(Reception *self) {
   pthread_t t;
 
-  pthread_create(&t, NULL, start_reception(self), NULL);
-  assert(t == 0 && "failed to create reception thread");
+  int thread_status = pthread_create(&t, NULL, thread_wrapper, (void *)self);
+  assert(thread_status == 0 && "failed to create reception thread");
 
   return t;
 };
