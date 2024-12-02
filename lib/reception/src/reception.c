@@ -51,6 +51,9 @@ ClientProcess create_client_process(Reception *self) {
     client_process.time_to_attend = time_to_attend;
     get_now(&client_process.ts);
 
+    int fclose_status = fclose(demanda);
+    assert(fclose_status == 0 && "failed to close demanda file");
+
     return client_process;
   }
 }
