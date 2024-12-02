@@ -19,9 +19,6 @@ ClientProcess create_client_process(Reception *self) {
     client_priority = Standard;
   }
 
-  FILE *demanda = fopen("demanda.txt", "r");
-  assert(demanda != NULL && "failed to open demanda file");
-
   pid_t pid = fork();
   assert(pid >= 0 && "failed to spawn client process");
 
@@ -43,9 +40,12 @@ ClientProcess create_client_process(Reception *self) {
     waitpid(client_process.pid, &status, WUNTRACED);
     assert(WIFSTOPPED(status) == 1 && "client process didn't stopped");
 
+    FILE *demanda = fopen("demanda.txt", "r");
+    assert(demanda != NULL && "failed to open demanda file");
+
     int time_to_attend;
     int fscanf_status = fscanf(demanda, "%d", &time_to_attend);
-    assert(fscanf_status == 0 && "failed to read integer from demanda file");
+    assert(fscanf_status == 1 && "failed to read single integer from demanda file");
 
     client_process.time_to_attend = time_to_attend;
     get_now(&client_process.ts);
