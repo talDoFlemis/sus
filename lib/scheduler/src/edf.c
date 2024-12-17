@@ -1,10 +1,9 @@
+#include "scheduler/include/edf.h"
 #include "client/include/client.h"
 #include "limits.h"
 #include "stdio.h"
 #include "stdlib.h"
 #include "sys/time.h"
-
-#define EDF_MAX_ITEMS 128
 
 long priority_rank(ClientProcess *client, const long patience_usec) {
   long started_usec =
@@ -28,11 +27,6 @@ long priority_rank(ClientProcess *client, const long patience_usec) {
     return time_to_deadline;
   }
 }
-
-typedef struct {
-  ClientProcess *items[EDF_MAX_ITEMS];
-  size_t size;
-} EDF;
 
 size_t parent(size_t idx) { return (idx - 1) / 2; }
 size_t left_child(size_t idx) { return ((2 * idx + 1)); }
