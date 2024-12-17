@@ -23,7 +23,7 @@ Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
     exit(1);
   }
 
-  FILE *lng_file = fopen(lng_file_path, "a");
+  FILE *lng_file = fopen(lng_file_path, "w");
   if (lng_file == NULL) {
     printf("Failed to open the LNG file.");
     exit(1);
@@ -35,7 +35,6 @@ Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
   att.scheduler = scheduler;
   att.attended_count = 0;
   att.satisfied_count = 0;
-
   att.lng_file = lng_file;
   return att;
 }
@@ -46,12 +45,12 @@ void attend_client(Attendant *att, ClientProcess *client,
   kill(client->pid, SIGCONT);
   sem_wait(att->sem_atend);
 
-  // write client PID in the LNG file
-  sem_wait(att->sem_block);
-  fwrite(&client->pid, sizeof(pid_t), 1, att->lng_file);
-  sem_post(att->sem_block);
+  // add PID to the buffer
+  att->pid_buffer[att->pid_buffer_size] = client->pid;
+  ++att->pid_buffer_size;
 
   ++att->attended_count;
+
   // calculate satisfaction
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -82,12 +81,23 @@ void start_attedant(Attendant *att, unsigned long patience_usec) {
 
     if (client == NULL && stop) {
       // if received a sigterm and all clients have been attended.
+      sem_wait(att->sem_block);
+      fwrite(att->pid_buffer, sizeof(pid_t), att->pid_buffer_size,
+             att->lng_file);
+      sem_post(att->sem_block);
+
       kill(att->analyst_pid, SIGCONT);
       exit(0);
     } else {
       attend_client(att, client, patience_usec);
       // at each 10 clients...
-      if (att->attended_count % 10 == 0) {
+      if (att->pid_buffer_size == 10) {
+        sem_wait(att->sem_block);
+        fwrite(att->pid_buffer, sizeof(pid_t), 10, att->lng_file);
+        sem_post(att->sem_block);
+
+        att->pid_buffer_size = 0;
+
         kill(att->analyst_pid, SIGCONT);
       }
     }

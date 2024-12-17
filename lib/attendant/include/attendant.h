@@ -11,6 +11,8 @@ typedef struct {
   unsigned int satisfied_count;
   pid_t analyst_pid;
   FILE *lng_file;
+  pid_t pid_buffer[10];
+  size_t pid_buffer_size;
 } Attendant;
 
 Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
