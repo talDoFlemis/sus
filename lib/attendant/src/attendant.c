@@ -5,6 +5,7 @@
 #include "signal.h"
 #include "stdio.h"
 #include "stdlib.h"
+#include "string.h"
 #include "sys/time.h"
 
 Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
@@ -63,26 +64,29 @@ void attend_client(Attendant *att, ClientProcess *client,
   }
 }
 
+volatile sig_atomic_t stop = 0;
+
+void handle_sigterm(int signum) { stop = 1; }
+
 void start_attedant(Attendant *att, unsigned long patience_usec) {
+  struct sigaction sigterm_action;
+  memset(&sigterm_action, 0, sizeof(sigterm_action));
+  sigterm_action.sa_handler = handle_sigterm;
+  sigaction(SIGTERM, &sigterm_action, NULL);
+
   while (1) {
     // get next client in the scheduler
     sem_wait(att->sem_scheduler);
     ClientProcess *client = dequeue(att->scheduler, patience_usec);
     sem_post(att->sem_scheduler);
 
-    // TODO: fix scenario where the analist consumes < 10 PIDs and, in further
-    // iterations, the analist will consume < 10 PIDs each time.
-    // OBVIOUS SOLUTION: the analist should only be allowed to consume < 10 PIDs
-    // in the last iteration.
-    //
-    // PROBLEM: how to know that is the last iteration?
-    // SOLUTION: that happens when a attendant receive a SIGTERM.
-    if (client == NULL) {
-      // if there is no more clients wake up the analyst
+    if (client == NULL && stop) {
+      // if received a sigterm and all clients have been attended.
       kill(att->analyst_pid, SIGCONT);
+      exit(0);
     } else {
       attend_client(att, client, patience_usec);
-      // wake the analyst at each 10 clients
+      // at each 10 clients...
       if (att->attended_count % 10 == 0) {
         kill(att->analyst_pid, SIGCONT);
       }
