@@ -81,8 +81,15 @@ void insert(EDF *edf, ClientProcess *client, const long patience_usec) {
   ++edf->size;
 }
 
-ClientProcess *peek(EDF *edf) { return edf->items[0]; }
+ClientProcess *peek(EDF *edf) {
+  if (edf->size == 0)
+    return NULL;
+  return edf->items[0];
+}
 ClientProcess *dequeue(EDF *edf, const long patience_usec) {
+  if (edf->size == 0)
+    return NULL;
+
   ClientProcess *next = edf->items[0];
 
   edf->items[0] = edf->items[edf->size - 1];
