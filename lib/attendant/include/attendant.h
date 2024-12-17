@@ -15,4 +15,4 @@ typedef struct {
 
 Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
                            char *lng_file_path);
-void attend_next(Attendant *att, const long patience_usec);
+void start_attedant(Attendant *att, unsigned long patience_usec);
