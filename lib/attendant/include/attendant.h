@@ -3,7 +3,7 @@
 #include "stdio.h"
 
 typedef struct {
-  sem_t *sem_nxtclient;
+  sem_t *sem_scheduler;
   sem_t *sem_atend;
   sem_t *sem_block;
   EDF *scheduler;

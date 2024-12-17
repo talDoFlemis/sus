@@ -11,11 +11,12 @@ Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
                            char *lng_file_path) {
   Attendant att;
 
-  sem_t *nxtclient = sem_open("/sem_nxtclient", O_RDONLY);
-  sem_t *atend = sem_open("/sem_atend", O_RDWR);
-  sem_t *block = sem_open("/sem_block", O_WRONLY);
+  sem_t *sem_scheduler = sem_open("/sem_scheduler", O_RDONLY);
+  sem_t *sem_atend = sem_open("/sem_atend", O_RDWR);
+  sem_t *sem_block = sem_open("/sem_block", O_WRONLY);
 
-  if (nxtclient == SEM_FAILED || atend == SEM_FAILED || block == SEM_FAILED) {
+  if (sem_scheduler == SEM_FAILED || sem_atend == SEM_FAILED ||
+      sem_block == SEM_FAILED) {
     printf("Failed to create attendant. The sem_nxtclient, sem_atend or "
            "sem_block semaphores may be unavailable.");
     exit(1);
@@ -27,9 +28,9 @@ Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
     exit(1);
   }
 
-  att.sem_nxtclient = nxtclient;
-  att.sem_atend = atend;
-  att.sem_block = block;
+  att.sem_scheduler = sem_scheduler;
+  att.sem_atend = sem_atend;
+  att.sem_block = sem_block;
   att.scheduler = scheduler;
   att.attended_count = 0;
   att.satisfied_count = 0;
@@ -38,22 +39,8 @@ Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
   return att;
 }
 
-void attend_next(Attendant *att, const long patience_usec) {
-  // get next client in the scheduler
-  sem_wait(att->sem_nxtclient);
-  ClientProcess *client = dequeue(att->scheduler, patience_usec);
-  sem_post(att->sem_nxtclient);
-
-  // if there is no more clients wake up the analyst
-  // TODO: fix scenario where the analist consumes < 10 PIDs and, in further
-  // iterations, the analist will consume < 10 PIDs each time.
-  // HOW: the analist should only be allowed to consume < 10 PIDs in the last
-  // iteration.
-  if (client == NULL) {
-    kill(att->analyst_pid, SIGCONT);
-    return;
-  }
-
+void attend_client(Attendant *att, ClientProcess *client,
+                   const long patience_usec) {
   // execute client
   kill(client->pid, SIGCONT);
   sem_wait(att->sem_atend);
@@ -74,9 +61,31 @@ void attend_next(Attendant *att, const long patience_usec) {
   if (time_span <= patience_usec) {
     ++att->satisfied_count;
   }
+}
 
-  // wake the analyst at each 10 clients
-  if (att->attended_count % 10 == 0) {
-    kill(att->analyst_pid, SIGCONT);
+void start_attedant(Attendant *att, unsigned long patience_usec) {
+  while (1) {
+    // get next client in the scheduler
+    sem_wait(att->sem_scheduler);
+    ClientProcess *client = dequeue(att->scheduler, patience_usec);
+    sem_post(att->sem_scheduler);
+
+    // TODO: fix scenario where the analist consumes < 10 PIDs and, in further
+    // iterations, the analist will consume < 10 PIDs each time.
+    // OBVIOUS SOLUTION: the analist should only be allowed to consume < 10 PIDs
+    // in the last iteration.
+    //
+    // PROBLEM: how to know that is the last iteration?
+    // SOLUTION: that happens when a attendant receive a SIGTERM.
+    if (client == NULL) {
+      // if there is no more clients wake up the analyst
+      kill(att->analyst_pid, SIGCONT);
+    } else {
+      attend_client(att, client, patience_usec);
+      // wake the analyst at each 10 clients
+      if (att->attended_count % 10 == 0) {
+        kill(att->analyst_pid, SIGCONT);
+      }
+    }
   }
 }
