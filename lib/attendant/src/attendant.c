@@ -1,13 +1,14 @@
 #include "attendant/include/attendant.h"
 #include "client/include/client.h"
-#include "semaphore.h"
-#include "signal.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
-#include "sys/time.h"
 #include <assert.h>
 #include <pthread.h>
+#include <semaphore.h>
+#include <signal.h>
+#include <stdatomic.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
 
 Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
                             char *lng_file_path, unsigned long patience_usec,
@@ -57,23 +58,16 @@ void attend_client(Attendant *att, ClientProcess *client,
   free(client);
 }
 
-volatile sig_atomic_t stop = 0;
-
-void handle_sigterm(int signum) { stop = 1; }
+extern atomic_int client_stream_ended;
 
 void start_attedant(Attendant *att) {
-  struct sigaction sigterm_action;
-  memset(&sigterm_action, 0, sizeof(sigterm_action));
-  sigterm_action.sa_handler = handle_sigterm;
-  sigaction(SIGTERM, &sigterm_action, NULL);
-
   while (1) {
     // get next client in the scheduler
     sem_wait(att->sem_scheduler);
     ClientProcess *client = dequeue(att->scheduler, att->patience_usec);
     sem_post(att->sem_scheduler);
 
-    if (client == NULL && stop) {
+    if (client == NULL && atomic_load(&client_stream_ended)) {
       // if received a sigterm and all clients have been attended.
       if (att->pid_buffer_size > 0) {
         sem_wait(att->sem_block);
