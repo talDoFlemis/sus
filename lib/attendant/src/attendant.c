@@ -81,12 +81,20 @@ void start_attedant(Attendant *att, unsigned long patience_usec) {
 
     if (client == NULL && stop) {
       // if received a sigterm and all clients have been attended.
-      sem_wait(att->sem_block);
-      fwrite(att->pid_buffer, sizeof(pid_t), att->pid_buffer_size,
-             att->lng_file);
-      sem_post(att->sem_block);
+      if (att->pid_buffer_size > 0) {
+        sem_wait(att->sem_block);
+        fwrite(att->pid_buffer, sizeof(pid_t), att->pid_buffer_size,
+               att->lng_file);
+        fflush(att->lng_file);
+        sem_post(att->sem_block);
 
-      kill(att->analyst_pid, SIGCONT);
+        kill(att->analyst_pid, SIGCONT);
+      }
+
+      fclose(att->lng_file);
+      sem_close(att->sem_block);
+      sem_close(att->sem_atend);
+      sem_close(att->sem_scheduler);
       exit(0);
     } else {
       attend_client(att, client, patience_usec);
@@ -94,6 +102,7 @@ void start_attedant(Attendant *att, unsigned long patience_usec) {
       if (att->pid_buffer_size == 10) {
         sem_wait(att->sem_block);
         fwrite(att->pid_buffer, sizeof(pid_t), 10, att->lng_file);
+        fflush(att->lng_file);
         sem_post(att->sem_block);
 
         att->pid_buffer_size = 0;
