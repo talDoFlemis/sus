@@ -6,6 +6,7 @@
 #include "utils/include/time.h"
 #include <argp.h>
 #include <assert.h>
+#include <fcntl.h>
 #include <semaphore.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -47,6 +48,16 @@ int main(int argc, char *argv[]) {
   sem_init(sem_block, 1, 1);
   assert(sem_block != SEM_FAILED && "failed to create semaphore for block");
 
+  printf("Creating named semaphore for block...\n");
+  sem_t *sem_atend = sem_open("/sem_atend", O_RDWR);
+
+  if (sem_atend == SEM_FAILED) {
+    sem_unlink("/sem_atend");
+    sem_atend = sem_open("/sem_atend", O_CREAT | O_RDWR);
+    assert(sem_atend != SEM_FAILED &&
+           "failed to create named semaphore for atend");
+  }
+
   printf("Creating scheduler...\n");
   EDF *scheduler = create_edf();
 
@@ -66,9 +77,9 @@ int main(int argc, char *argv[]) {
       arguments.patience_in_us);
 
   printf("Creating attendant...\n");
-  Attendant *attendant =
-      create_attendant(scheduler, analyst_pid, arguments.path_to_lng_file,
-                       arguments.patience_in_us, &sem_scheduler);
+  Attendant *attendant = create_attendant(
+      scheduler, analyst_pid, arguments.path_to_lng_file,
+      arguments.patience_in_us, &sem_scheduler, sem_block, sem_atend);
 
   printf("Creating service...\n");
   Service *service = create_new_service(reception, attendant);
@@ -103,6 +114,12 @@ int main(int argc, char *argv[]) {
   printf("Page faults: %ld times\n", usage.ru_majflt);
   printf("Voluntary context switches: %ld times\n", usage.ru_nvcsw);
   printf("Involuntary context switches: %ld times\n", usage.ru_nivcsw);
+
+  printf("Destroying semaphores...\n");
+  sem_destroy(&sem_scheduler);
+  sem_destroy(sem_block);
+  sem_close(sem_atend);
+  sem_unlink("/sem_atend");
 
   return EXIT_SUCCESS;
 }

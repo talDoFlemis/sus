@@ -17,9 +17,8 @@ Analyst *create_analyst(char *lng_file_path, uint8_t max_number_of_int_to_read,
   Analyst *analyst = malloc(sizeof(Analyst));
   assert(analyst != NULL && "failed to allocate memory for analyst");
 
-  FILE *lng_file = fopen(lng_file_path, "r");
+  FILE *lng_file = fopen(lng_file_path, "a+");
   assert(lng_file != NULL && "failed to open lng file");
-
 
   analyst->max_number_of_int_to_read = max_number_of_int_to_read;
   analyst->sem_block = sem_block;

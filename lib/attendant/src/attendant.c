@@ -1,6 +1,5 @@
 #include "attendant/include/attendant.h"
 #include "client/include/client.h"
-#include "fcntl.h"
 #include "semaphore.h"
 #include "signal.h"
 #include "stdio.h"
@@ -12,23 +11,13 @@
 
 Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
                             char *lng_file_path, unsigned long patience_usec,
-                            sem_t *sem_scheduler) {
+                            sem_t *sem_scheduler, sem_t *sem_block,
+                            sem_t *sem_atend) {
   Attendant *att = malloc(sizeof(Attendant));
-
-  sem_t *sem_atend = sem_open("/sem_atend", O_RDWR);
-  sem_t *sem_block = sem_open("/sem_block", O_WRONLY);
-
-  if (sem_atend == SEM_FAILED || sem_block == SEM_FAILED) {
-    printf("Failed to create attendant. The sem_nxtclient, sem_atend or "
-           "sem_block semaphores may be unavailable.");
-    exit(1);
-  }
+  assert(att != NULL && "failed to allocate memory for attendant");
 
   FILE *lng_file = fopen(lng_file_path, "w");
-  if (lng_file == NULL) {
-    printf("Failed to open the LNG file.");
-    exit(1);
-  }
+  assert(lng_file != NULL && "failed to open lng file");
 
   att->sem_scheduler = sem_scheduler;
   att->sem_atend = sem_atend;
