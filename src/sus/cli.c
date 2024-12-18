@@ -11,15 +11,15 @@ static char doc[] = "SUS - Simple Unix Sort";
 static char args_doc[] = "";
 
 static struct argp_option options[] = {
-    {"number-of-clients", 'n', 0, 0,
+    {"number-of-clients", 'n', "NUMBER", 0,
      "Number of clients that will be scheduled."},
-    {"max-number-of-processes", 'p', 0, 0,
+    {"max-number-of-processes", 'p', "NUMBER", 0,
      "Max number of concurrent client processes."},
-    {"path-to-client-process", 'c', 0, 0, "Path to client process."},
-    {"patience-in-us", 't', 0, 0, "Patience for the project in usec."},
-    {"seed", 's', 0, 0, "Seed for random number generation."},
-    {"lng-file-path", 'l', 0, 0, "Path to LNG file."},
-    {"max-number-of-ints-to-read", 'm', 0, 0,
+    {"path-to-client-process", 'c', "CLIENT_PROCESS", 0, "Path to client process."},
+    {"patience-in-us", 't', "NUMBER", 0, "Patience for the project in usec."},
+    {"seed", 's', "NUMBER", 0, "Seed for random number generation."},
+    {"lng-file-path", 'l', "FILE_PATH", 0, "Path to LNG file."},
+    {"max-number-of-ints-to-read", 'm', "NUMBER", 0,
      "Max number of integers a analyst can read at once."},
     {0}};
 
@@ -37,25 +37,25 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   struct arguments *arguments = state->input;
   switch (key) {
   case 'n':
-    arguments->number_of_clients = atoi(arg);
+    if (arg) arguments->number_of_clients = strtoull(arg, NULL, 10);
     break;
   case 'p':
-    arguments->max_number_of_processes = atoi(arg);
+    if (arg) arguments->max_number_of_processes = (uint8_t)strtoul(arg, NULL, 10);
     break;
   case 'c':
     arguments->path_to_client_process = arg;
     break;
   case 't':
-    arguments->patience_in_us = atoi(arg);
+    if (arg) arguments->patience_in_us = strtoull(arg, NULL, 10);
     break;
   case 's':
-    arguments->seed = atoi(arg);
+    if (arg) arguments->seed = strtoull(arg, NULL, 10);
     break;
   case 'l':
     arguments->path_to_lng_file = arg;
     break;
   case 'm':
-    arguments->max_number_of_int_to_read = atoi(arg);
+    if (arg) arguments->max_number_of_int_to_read = (uint8_t)strtoul(arg, NULL, 10);
     break;
   case ARGP_KEY_ARG:
     return 0;
