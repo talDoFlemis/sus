@@ -13,7 +13,8 @@ typedef struct Analyst {
   FILE *lng_file;
 } Analyst;
 
-Analyst create_analyst(char *lng_file_path, uint8_t max_number_of_int_read);
+Analyst *create_analyst(char *lng_file_path, uint8_t max_number_of_int_read,
+                       sem_t *sem_block);
 
 void start_analyst(Analyst *self);
 

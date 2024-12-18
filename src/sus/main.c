@@ -9,6 +9,7 @@
 #include <semaphore.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -33,18 +34,27 @@ int main(int argc, char *argv[]) {
   printf("Max number of integers to read: %u\n",
          arguments.max_number_of_int_to_read);
 
-  printf("Creating semaphore for scheduler...\n");
+  printf("Creating unamed semaphores...\n");
   sem_t sem_scheduler;
-  int sem_init_status = sem_init(&sem_scheduler, 0, 1);
-  assert(sem_init_status == 0 && "failed to create semaphore for scheduler");
+  sem_init(&sem_scheduler, 0, 1);
+  assert(&sem_scheduler != SEM_FAILED &&
+         "failed to create semaphore for scheduler");
+
+  sem_t *sem_block = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE,
+                          MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+  assert(sem_block != MAP_FAILED &&
+         "failed to create shared semaphore for block");
+  sem_init(sem_block, 1, 1);
+  assert(sem_block != SEM_FAILED && "failed to create semaphore for block");
 
   printf("Creating scheduler...\n");
   EDF *scheduler = create_edf();
 
   printf("Creating analyst process...\n");
-  Analyst analyst = create_analyst(arguments.path_to_lng_file,
-                                   arguments.max_number_of_int_to_read);
-  pid_t analyst_pid = create_analyst_process(&analyst);
+  Analyst *analyst =
+      create_analyst(arguments.path_to_lng_file,
+                     arguments.max_number_of_int_to_read, sem_block);
+  pid_t analyst_pid = create_analyst_process(analyst);
   printf("Analyst PID: %d\n", analyst_pid);
   printf("Read integers processed by analyst on /proc/%d/fd/1\n", analyst_pid);
   printf("\tTIP: tail -f /proc/%d/fd/1\n", analyst_pid);

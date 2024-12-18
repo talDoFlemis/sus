@@ -2,32 +2,33 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sched.h>
+#include <semaphore.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-Analyst create_analyst(char *lng_file_path, uint8_t max_number_of_int_to_read) {
+Analyst *create_analyst(char *lng_file_path, uint8_t max_number_of_int_to_read,
+                        sem_t *sem_block) {
   assert(lng_file_path != NULL && "empty lng file path");
-
-  sem_t *sem_block = sem_open("/sem_block", O_RDONLY);
-  assert(sem_block != SEM_FAILED && "failed to create sem_block semaphore");
+  assert(max_number_of_int_to_read > 0 &&
+         "max number of int to read must be greater than 0");
+  Analyst *analyst = malloc(sizeof(Analyst));
+  assert(analyst != NULL && "failed to allocate memory for analyst");
 
   FILE *lng_file = fopen(lng_file_path, "r");
   assert(lng_file != NULL && "failed to open lng file");
 
-  Analyst analyst = {
-      .max_number_of_int_to_read = max_number_of_int_to_read,
-      .sem_block = sem_block,
-      .lng_file = lng_file,
-  };
+
+  analyst->max_number_of_int_to_read = max_number_of_int_to_read;
+  analyst->sem_block = sem_block;
+  analyst->lng_file = lng_file;
 
   return analyst;
 }
 
 void start_analyst(Analyst *self) {
-
   raise(SIGSTOP);
 
   pid_t buffer[self->max_number_of_int_to_read];
@@ -36,8 +37,8 @@ void start_analyst(Analyst *self) {
   do {
     sem_wait(self->sem_block);
 
-    remaining_int =
-        fread(buffer, sizeof(pid_t), self->max_number_of_int_to_read, self->lng_file);
+    remaining_int = fread(buffer, sizeof(pid_t),
+                          self->max_number_of_int_to_read, self->lng_file);
     for (uint8_t i = 0; i < remaining_int; i++) {
       printf("%d\n", buffer[i]);
     }
