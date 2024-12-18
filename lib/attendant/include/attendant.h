@@ -1,3 +1,6 @@
+#ifndef ATTENDANT_H
+
+#define ATTENDANT_H
 #include "scheduler/include/edf.h"
 #include "semaphore.h"
 #include "stdio.h"
@@ -18,3 +21,5 @@ typedef struct {
 Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
                            char *lng_file_path);
 void start_attedant(Attendant *att, unsigned long patience_usec);
+
+#endif // !ATTENDANT_H
