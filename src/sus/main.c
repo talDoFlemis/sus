@@ -34,8 +34,8 @@ int main(int argc, char *argv[]) {
          arguments.max_number_of_int_to_read);
 
   printf("Creating semaphore for scheduler...\n");
-  sem_t *sem_scheduler;
-  int sem_init_status = sem_init(sem_scheduler, 0, 1);
+  sem_t sem_scheduler;
+  int sem_init_status = sem_init(&sem_scheduler, 0, 1);
   assert(sem_init_status == 0 && "failed to create semaphore for scheduler");
 
   printf("Creating scheduler...\n");
@@ -52,13 +52,13 @@ int main(int argc, char *argv[]) {
   printf("Creating reception...\n");
   Reception *reception = create_new_reception(
       arguments.number_of_clients, arguments.max_number_of_processes,
-      arguments.path_to_client_process, scheduler, sem_scheduler,
+      arguments.path_to_client_process, scheduler, &sem_scheduler,
       arguments.patience_in_us);
 
   printf("Creating attendant...\n");
   Attendant *attendant =
       create_attendant(scheduler, analyst_pid, arguments.path_to_lng_file,
-                       arguments.patience_in_us, sem_scheduler);
+                       arguments.patience_in_us, &sem_scheduler);
 
   printf("Creating service...\n");
   Service *service = create_new_service(reception, attendant);
