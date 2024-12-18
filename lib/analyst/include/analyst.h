@@ -2,19 +2,18 @@
 
 #define ANALYST_H
 
+#include <semaphore.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
 
 typedef struct Analyst {
-  uint64_t current_line_number;
   uint8_t max_number_of_int_to_read;
-  char *lng_file_path;
-  FILE *output_stream;
+  sem_t *sem_block;
+  FILE *lng_file;
 } Analyst;
 
-Analyst create_analyst(char *lng_file_path, uint8_t max_number_of_int_read,
-                       FILE *output_stream);
+Analyst create_analyst(char *lng_file_path, uint8_t max_number_of_int_read);
 
 void start_analyst(Analyst *self);
 
