@@ -63,6 +63,9 @@ void attend_client(Attendant *att, ClientProcess *client,
   if (time_span <= patience_usec) {
     ++att->satisfied_count;
   }
+
+  // free client
+  free(client);
 }
 
 volatile sig_atomic_t stop = 0;
