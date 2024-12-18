@@ -56,9 +56,9 @@ int main(int argc, char *argv[]) {
       arguments.patience_in_us);
 
   printf("Creating attendant...\n");
-  Attendant attendant =
+  Attendant *attendant =
       create_attendant(scheduler, analyst_pid, arguments.path_to_lng_file,
-                       arguments.patience_in_us);
+                       arguments.patience_in_us, sem_scheduler);
 
   printf("Creating service...\n");
   Service *service = create_new_service(reception, attendant);

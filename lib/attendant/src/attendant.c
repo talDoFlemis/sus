@@ -10,16 +10,15 @@
 #include <assert.h>
 #include <pthread.h>
 
-Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
-                           char *lng_file_path, unsigned long patience_usec) {
-  Attendant att;
+Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
+                            char *lng_file_path, unsigned long patience_usec,
+                            sem_t *sem_scheduler) {
+  Attendant *att = malloc(sizeof(Attendant));
 
-  sem_t *sem_scheduler = sem_open("/sem_scheduler", O_RDONLY);
   sem_t *sem_atend = sem_open("/sem_atend", O_RDWR);
   sem_t *sem_block = sem_open("/sem_block", O_WRONLY);
 
-  if (sem_scheduler == SEM_FAILED || sem_atend == SEM_FAILED ||
-      sem_block == SEM_FAILED) {
+  if (sem_atend == SEM_FAILED || sem_block == SEM_FAILED) {
     printf("Failed to create attendant. The sem_nxtclient, sem_atend or "
            "sem_block semaphores may be unavailable.");
     exit(1);
@@ -31,14 +30,14 @@ Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
     exit(1);
   }
 
-  att.sem_scheduler = sem_scheduler;
-  att.sem_atend = sem_atend;
-  att.sem_block = sem_block;
-  att.scheduler = scheduler;
-  att.attended_count = 0;
-  att.satisfied_count = 0;
-  att.lng_file = lng_file;
-  att.patience_usec = patience_usec;
+  att->sem_scheduler = sem_scheduler;
+  att->sem_atend = sem_atend;
+  att->sem_block = sem_block;
+  att->scheduler = scheduler;
+  att->attended_count = 0;
+  att->satisfied_count = 0;
+  att->lng_file = lng_file;
+  att->patience_usec = patience_usec;
   return att;
 }
 

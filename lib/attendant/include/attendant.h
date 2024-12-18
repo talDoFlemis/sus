@@ -19,8 +19,9 @@ typedef struct {
   unsigned long patience_usec;
 } Attendant;
 
-Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
-                           char *lng_file_path, unsigned long patience_usec);
+Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
+                            char *lng_file_path, unsigned long patience_usec,
+                            sem_t *sem_scheduler);
 void start_attedant(Attendant *att);
 
 pthread_t spawn_attendant_thread(Attendant *self);

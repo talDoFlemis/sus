@@ -10,7 +10,7 @@
 const char *attendant_semaphore_path = "/sem_atend";
 const char *lng_semaphore_path = "/sem_block";
 
-Service *create_new_service(Reception *reception, Attendant attendant) {
+Service *create_new_service(Reception *reception, Attendant *attendant) {
   Service *service = malloc(sizeof(Service));
   service->reception = reception;
   service->attendant = attendant;
@@ -24,7 +24,7 @@ pid_t start_service_process(Service *self) {
   // Child process
   if (pid == 0) {
     pthread_t reception_thread = spawn_reception_thread(self->reception);
-    pthread_t attendant_thread = spawn_attendant_thread(&self->attendant);
+    pthread_t attendant_thread = spawn_attendant_thread(self->attendant);
 
     int join_status = pthread_join(reception_thread, NULL);
     assert(join_status != -1 && "failed to join reception thread on service");
