@@ -16,15 +16,20 @@ static struct argp_option options[] = {
     {"max-number-of-processes", 'p', 0, 0,
      "Max number of concurrent client processes."},
     {"path-to-client-process", 'c', 0, 0, "Path to client process."},
-    {"due-date-in-us", 'd', 0, 0, "Due date for the project."},
+    {"patience-in-us", 't', 0, 0, "Patience for the project in usec."},
     {"seed", 's', 0, 0, "Seed for random number generation."},
+    {"lng-file-path", 'l', 0, 0, "Path to LNG file."},
+    {"max-number-of-ints-to-read", 'm', 0, 0,
+     "Max number of integers a analyst can read at once."},
     {0}};
 
 struct arguments {
   uint64_t number_of_clients;
   uint8_t max_number_of_processes;
-  uint64_t due_date_in_us;
+  uint64_t patience_in_us;
   char *path_to_client_process;
+  char *path_to_lng_file;
+  uint8_t max_number_of_int_to_read;
   uint64_t seed;
 };
 
@@ -40,11 +45,17 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   case 'c':
     arguments->path_to_client_process = arg;
     break;
-  case 'd':
-    arguments->due_date_in_us = atoi(arg);
+  case 't':
+    arguments->patience_in_us = atoi(arg);
     break;
   case 's':
     arguments->seed = atoi(arg);
+    break;
+  case 'l':
+    arguments->path_to_lng_file = arg;
+    break;
+  case 'm':
+    arguments->max_number_of_int_to_read = atoi(arg);
     break;
   case ARGP_KEY_ARG:
     return 0;
@@ -59,7 +70,9 @@ static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 static void set_default_arguments(struct arguments *arguments) {
   arguments->number_of_clients = 1;
   arguments->max_number_of_processes = 4;
-  arguments->due_date_in_us = 0;
+  arguments->patience_in_us = 100;
   arguments->path_to_client_process = "./client";
   arguments->seed = 42069;
+  arguments->path_to_lng_file = "./lng";
+  arguments->max_number_of_int_to_read = 10;
 }

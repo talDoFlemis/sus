@@ -4,6 +4,14 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "sys/time.h"
+#include <assert.h>
+
+EDF *create_edf() {
+  EDF *edf = malloc(sizeof(EDF));
+  assert(edf != NULL && "failed to allocate memory for EDF");
+  edf->size = 0;
+  return edf;
+}
 
 long priority_rank(ClientProcess *client, const long patience_usec) {
   long started_usec =
