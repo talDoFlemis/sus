@@ -11,6 +11,8 @@ typedef struct {
   size_t size;
 } EDF;
 
+EDF *create_edf();
+
 void insert(EDF *edf, ClientProcess *client, const long patience_usec);
 ClientProcess *peek(EDF *edf);
 ClientProcess *dequeue(EDF *edf, const long patience_usec);
