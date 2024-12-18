@@ -16,10 +16,13 @@ typedef struct {
   FILE *lng_file;
   pid_t pid_buffer[10];
   size_t pid_buffer_size;
+  unsigned long patience_usec;
 } Attendant;
 
 Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
-                           char *lng_file_path);
-void start_attedant(Attendant *att, unsigned long patience_usec);
+                           char *lng_file_path, unsigned long patience_usec);
+void start_attedant(Attendant *att);
+
+pthread_t spawn_attendant_thread(Attendant *self);
 
 #endif // !ATTENDANT_H

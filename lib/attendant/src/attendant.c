@@ -7,9 +7,11 @@
 #include "stdlib.h"
 #include "string.h"
 #include "sys/time.h"
+#include <assert.h>
+#include <pthread.h>
 
 Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
-                           char *lng_file_path) {
+                           char *lng_file_path, unsigned long patience_usec) {
   Attendant att;
 
   sem_t *sem_scheduler = sem_open("/sem_scheduler", O_RDONLY);
@@ -36,6 +38,7 @@ Attendant create_attendant(EDF *scheduler, pid_t analist_pid,
   att.attended_count = 0;
   att.satisfied_count = 0;
   att.lng_file = lng_file;
+  att.patience_usec = patience_usec;
   return att;
 }
 
@@ -67,7 +70,7 @@ volatile sig_atomic_t stop = 0;
 
 void handle_sigterm(int signum) { stop = 1; }
 
-void start_attedant(Attendant *att, unsigned long patience_usec) {
+void start_attedant(Attendant *att) {
   struct sigaction sigterm_action;
   memset(&sigterm_action, 0, sizeof(sigterm_action));
   sigterm_action.sa_handler = handle_sigterm;
@@ -76,7 +79,7 @@ void start_attedant(Attendant *att, unsigned long patience_usec) {
   while (1) {
     // get next client in the scheduler
     sem_wait(att->sem_scheduler);
-    ClientProcess *client = dequeue(att->scheduler, patience_usec);
+    ClientProcess *client = dequeue(att->scheduler, att->patience_usec);
     sem_post(att->sem_scheduler);
 
     if (client == NULL && stop) {
@@ -89,7 +92,7 @@ void start_attedant(Attendant *att, unsigned long patience_usec) {
       kill(att->analyst_pid, SIGCONT);
       exit(0);
     } else {
-      attend_client(att, client, patience_usec);
+      attend_client(att, client, att->patience_usec);
       // at each 10 clients...
       if (att->pid_buffer_size == 10) {
         sem_wait(att->sem_block);
@@ -103,3 +106,19 @@ void start_attedant(Attendant *att, unsigned long patience_usec) {
     }
   }
 }
+
+void *attendant_thread_wrapper(void *ptr) {
+  Attendant *self = (Attendant *)ptr;
+  start_attedant(self);
+  return NULL;
+}
+
+pthread_t spawn_attendant_thread(Attendant *self) {
+  pthread_t t;
+
+  int thread_status =
+      pthread_create(&t, NULL, attendant_thread_wrapper, (void *)self);
+  assert(thread_status == 0 && "failed to create reception thread");
+
+  return t;
+};
