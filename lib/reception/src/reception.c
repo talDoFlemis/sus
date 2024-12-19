@@ -110,6 +110,26 @@ void *thread_wrapper(void *ptr) {
 }
 
 extern atomic_int client_stream_ended;
+atomic_int stop_reception = ATOMIC_VAR_INIT(0);
+
+void *input_thread(void *arg) {
+  Reception *r_args = (Reception *)arg;
+
+  while (1) {
+    char input;
+    input = getchar();
+
+    if (input == 's' || input == 'S') {
+      atomic_store(&stop_reception, 1);
+      break;
+    }
+
+    while (getchar() != '\n')
+      ;
+  }
+
+  return NULL;
+}
 
 void start_reception(Reception *self) {
   if (self->mode == Batch) {
@@ -124,17 +144,11 @@ void start_reception(Reception *self) {
     }
     atomic_store(&client_stream_ended, 1);
   } else {
-    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+    pthread_t t;
+    int thread_status = pthread_create(&t, NULL, input_thread, (void *)self);
+    assert(thread_status == 0 && "failed to input thread");
 
-    char input[2];
-    ssize_t bytes_readed = read(STDIN_FILENO, input, 1);
-    while (1) {
-      if (bytes_readed > 0) {
-        if (input[0] == 's' && input[0] == 'S') {
-          break;
-        }
-      }
+    while (!atomic_load(&stop_reception)) {
       while (self->scheduler->size == EDF_MAX_ITEMS)
         continue;
       add_new_client_process(self);
