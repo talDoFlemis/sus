@@ -18,7 +18,7 @@ long priority_rank(ClientProcess *client, const long patience_usec) {
   long deadline;
   switch (client->priority) {
   case High:
-    deadline = started_usec + patience_usec / 2;
+    deadline = started_usec + (patience_usec / 2);
     break;
   case Standard:
     deadline = started_usec + patience_usec;
@@ -60,7 +60,7 @@ void shift_down(EDF *edf, size_t idx, const long patience_usec) {
     min_idx = left;
   }
 
-  size_t right = left_child(idx);
+  size_t right = right_child(idx);
   if (right < edf->size &&
       priority_rank(edf->items[right], patience_usec) <
           priority_rank(edf->items[min_idx], patience_usec)) {
