@@ -69,12 +69,12 @@ extern atomic_int client_stream_ended;
 
 void start_attedant(Attendant *att) {
   while (1) {
-    printf("before lock\n");
+    // printf("before lock\n");
     // get next client in the scheduler
     sem_wait(att->sem_scheduler);
     ClientProcess *client = dequeue(att->scheduler, att->patience_usec);
     sem_post(att->sem_scheduler);
-    printf("after lock\n");
+    // printf("after lock\n");
 
     int atomic_flag = atomic_load(&client_stream_ended);
     if (atomic_flag == 2 || (client == NULL && atomic_flag == 1)) {
@@ -95,7 +95,7 @@ void start_attedant(Attendant *att) {
       sem_close(att->sem_scheduler);
       break;
     } else if (client == NULL) {
-      printf("null client");
+      // printf("null client");
       continue;
     } else {
       printf("analyst pid %d\n", att->analyst_pid);

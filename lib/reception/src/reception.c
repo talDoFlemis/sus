@@ -112,21 +112,25 @@ extern atomic_int client_stream_ended;
 
 void start_reception(Reception *self) {
   if (self->mode == Batch) {
+    return;
     while (self->number_of_clients != 0) {
 
-      while (self->scheduler->size == EDF_MAX_ITEMS)
-        continue;
+      if (self->scheduler->size != EDF_MAX_ITEMS) {
+        add_new_client_process(self);
 
-      add_new_client_process(self);
-
-      self->number_of_clients--;
+        self->number_of_clients--;
+      }
     }
     atomic_store(&client_stream_ended, 1);
   } else {
+    printf("ai e foda!\n");
     while (getchar() != 's') {
-      while (self->scheduler->size == EDF_MAX_ITEMS)
-        continue;
-      add_new_client_process(self);
+      printf("inner\n");
+      if (self->scheduler->size != EDF_MAX_ITEMS) {
+        printf("TESTE!");
+        add_new_client_process(self);
+        return;
+      }
     }
     atomic_store(&client_stream_ended, 2);
   }
