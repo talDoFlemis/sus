@@ -3,7 +3,6 @@
 #include "cli.c"
 #include "reception/include/reception.h"
 #include "service/include/service.h"
-#include "utils/include/time.h"
 #include <argp.h>
 #include <assert.h>
 #include <fcntl.h>
@@ -12,12 +11,13 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 #include <time.h>
 
 int main(int argc, char *argv[]) {
-  struct timespec start;
-  get_now(&start);
+  struct timeval start_time, end_time;
+  gettimeofday(&start_time, NULL);
 
   struct arguments arguments;
 
@@ -97,10 +97,13 @@ int main(int argc, char *argv[]) {
   assert(WEXITSTATUS(service_status) == EXIT_SUCCESS &&
          "service didn't exit with success");
 
-  uint64_t duration_time_in_ns = elapsed_time_until_now(start);
-
-  printf("Service finished processing all clients in %lu ns\n",
-         duration_time_in_ns);
+  gettimeofday(&end_time, NULL);
+  long int elapsed_time_in_usec =
+      ((end_time.tv_sec * 1000000) + end_time.tv_usec) -
+      ((start_time.tv_sec * 1000000) + start_time.tv_usec);
+  printf("Service finished processing all clients in %lu"
+         "us\n",
+         elapsed_time_in_usec);
 
   struct rusage usage;
   getrusage(RUSAGE_SELF, &usage);
