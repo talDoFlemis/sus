@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 
   printf("Service PID: %d\n", service_pid);
   if (arguments.number_of_clients == 0)
-    printf("Send 's' to /proc/%d/fd/0 to stop the service", service_pid);
+    printf("Send 's' to /proc/%d/fd/0 to stop the service\n", service_pid);
 
   printf("Waiting for service to finish processing all clients...\n");
   int service_status;

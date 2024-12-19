@@ -43,7 +43,6 @@ void attend_client(Attendant *att, ClientProcess *client,
   // execute client
   kill(client->pid, SIGCONT);
   sem_wait(att->sem_atend);
-  printf("here\n");
 
   // add PID to the buffer
   att->pid_buffer[att->pid_buffer_size] = client->pid;
@@ -53,10 +52,8 @@ void attend_client(Attendant *att, ClientProcess *client,
 
   // calculate satisfaction
   long time_span = elapsed_time_until_now(client->ts);
-  printf("time_span: %ld | patience_usec %ld\n", time_span, patience_usec);
   if (time_span <= patience_usec) {
     ++att->satisfied_count;
-    printf("new count: %u\n", att->satisfied_count);
   }
 
   sem_post(att->sem_atend);
@@ -69,12 +66,10 @@ extern atomic_int client_stream_ended;
 
 void start_attedant(Attendant *att) {
   while (1) {
-    printf("before lock\n");
     // get next client in the scheduler
     sem_wait(att->sem_scheduler);
     ClientProcess *client = dequeue(att->scheduler, att->patience_usec);
     sem_post(att->sem_scheduler);
-    printf("after lock\n");
 
     int atomic_flag = atomic_load(&client_stream_ended);
     if (atomic_flag == 2 || (client == NULL && atomic_flag == 1)) {
@@ -95,12 +90,9 @@ void start_attedant(Attendant *att) {
       sem_close(att->sem_scheduler);
       break;
     } else if (client == NULL) {
-      printf("null client");
       continue;
     } else {
-      printf("analyst pid %d\n", att->analyst_pid);
       attend_client(att, client, att->patience_usec);
-      printf("after attending \n");
       // at each 10 clients...
       if (att->pid_buffer_size == 10) {
         sem_wait(att->sem_block);
@@ -112,7 +104,6 @@ void start_attedant(Attendant *att) {
 
         kill(att->analyst_pid, SIGCONT);
       }
-      printf("attending 3 caba");
     }
   }
 }

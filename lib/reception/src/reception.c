@@ -3,6 +3,7 @@
 #include "scheduler/include/edf.h"
 #include "utils/include/time.h"
 #include <assert.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdint.h>
@@ -123,7 +124,17 @@ void start_reception(Reception *self) {
     }
     atomic_store(&client_stream_ended, 1);
   } else {
-    while (getchar() != 's') {
+    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+
+    char input[2];
+    ssize_t bytes_readed = read(STDIN_FILENO, input, 1);
+    while (1) {
+      if (bytes_readed > 0) {
+        if (input[0] == 's' && input[0] == 'S') {
+          break;
+        }
+      }
       while (self->scheduler->size == EDF_MAX_ITEMS)
         continue;
       add_new_client_process(self);
