@@ -122,15 +122,15 @@ void start_reception(Reception *self) {
 
       self->number_of_clients--;
     }
-
+    atomic_store(&client_stream_ended, 1);
   } else {
     while (getchar() != 's') {
       while (self->scheduler->size == EDF_MAX_ITEMS)
         continue;
       add_new_client_process(self);
     }
+    atomic_store(&client_stream_ended, 2);
   }
-  atomic_store(&client_stream_ended, 1);
 };
 
 pthread_t spawn_reception_thread(Reception *self) {

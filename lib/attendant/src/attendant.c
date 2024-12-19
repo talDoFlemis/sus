@@ -70,7 +70,8 @@ void start_attedant(Attendant *att) {
     ClientProcess *client = dequeue(att->scheduler, att->patience_usec);
     sem_post(att->sem_scheduler);
 
-    if (client == NULL && atomic_load(&client_stream_ended)) {
+    int atomic_flag = atomic_load(&client_stream_ended);
+    if (atomic_flag == 2 || (client == NULL && atomic_flag == 1)) {
       // if received a sigterm and all clients have been attended.
       if (att->pid_buffer_size > 0) {
         sem_wait(att->sem_block);
@@ -93,7 +94,7 @@ void start_attedant(Attendant *att) {
       sem_close(att->sem_block);
       sem_close(att->sem_atend);
       sem_close(att->sem_scheduler);
-      exit(0);
+      break;
     } else if (client == NULL) {
       continue;
     } else {
