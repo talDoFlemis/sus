@@ -39,6 +39,13 @@ pid_t start_service_process(Service *self) {
     int join_status2 = pthread_join(attendant_thread, NULL);
     assert(join_status2 != -1 && "failed to join attendant thread on service");
 
+    printf("Number of clients atended: %u\n", self->attendant->attended_count);
+    printf("Satisfied: %u\n", self->attendant->satisfied_count);
+
+    double satisfaction_rate = ((double)self->attendant->satisfied_count) /
+                               ((double)self->attendant->attended_count);
+    printf("Satisfaction rate: %f\n", satisfaction_rate);
+
     exit(EXIT_SUCCESS);
   }
   // Parent process
