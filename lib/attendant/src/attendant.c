@@ -1,5 +1,6 @@
 #include "attendant/include/attendant.h"
 #include "client/include/client.h"
+#include "utils/include/time.h"
 #include <assert.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -29,6 +30,9 @@ Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
   att->satisfied_count = 0;
   att->lng_file = lng_file;
   att->patience_usec = patience_usec;
+  att->analyst_pid = analist_pid;
+
+  sem_post(att->sem_atend);
   return att;
 }
 
@@ -47,15 +51,12 @@ void attend_client(Attendant *att, ClientProcess *client,
   ++att->attended_count;
 
   // calculate satisfaction
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  long curr_time_usec = (tv.tv_sec * 1000000) + tv.tv_usec;
-  long started_usec =
-      (client->ts.tv_sec * 1000000) + (client->ts.tv_nsec / 1000);
-  long time_span = curr_time_usec - started_usec;
+  long time_span = elapsed_time_until_now(client->ts);
   if (time_span <= patience_usec) {
     ++att->satisfied_count;
   }
+
+  sem_post(att->sem_atend);
 
   // free client
   free(client);
@@ -70,7 +71,8 @@ void start_attedant(Attendant *att) {
     ClientProcess *client = dequeue(att->scheduler, att->patience_usec);
     sem_post(att->sem_scheduler);
 
-    if (client == NULL && atomic_load(&client_stream_ended)) {
+    int atomic_flag = atomic_load(&client_stream_ended);
+    if (atomic_flag == 2 || (client == NULL && atomic_flag == 1)) {
       // if received a sigterm and all clients have been attended.
       if (att->pid_buffer_size > 0) {
         sem_wait(att->sem_block);
@@ -82,18 +84,11 @@ void start_attedant(Attendant *att) {
         kill(att->analyst_pid, SIGCONT);
       }
 
-      // Wait for analyst to finish processing
-      int analyst_status;
-      waitpid(att->analyst_pid, &analyst_status, 0);
-      assert(WIFEXITED(analyst_status) == 1 && "analyst didn't exit normally");
-      assert(WEXITSTATUS(analyst_status) == EXIT_SUCCESS &&
-             "analyst didn't exit with success");
-
       fclose(att->lng_file);
       sem_close(att->sem_block);
       sem_close(att->sem_atend);
       sem_close(att->sem_scheduler);
-      exit(0);
+      break;
     } else if (client == NULL) {
       continue;
     } else {

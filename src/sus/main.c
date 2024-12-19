@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
   printf("Number of clients: %lu\n", arguments.number_of_clients);
   printf("Max number of processes: %u\n", arguments.max_number_of_processes);
   printf("Path to client process: %s\n", arguments.path_to_client_process);
-  printf("Due date in us: %lu\n", arguments.patience_in_us);
+  printf("Patience time in ms: %lu\n", arguments.patience_in_ms);
   printf("Seed: %lu\n", arguments.seed);
   printf("Path to LNG file: %s\n", arguments.path_to_lng_file);
   printf("Max number of integers to read: %u\n",
@@ -49,11 +49,11 @@ int main(int argc, char *argv[]) {
   assert(sem_block != SEM_FAILED && "failed to create semaphore for block");
 
   printf("Creating named semaphore for block...\n");
-  sem_t *sem_atend = sem_open("/sem_atend", O_RDWR);
+  sem_t *sem_atend = sem_open("/sem_atend", O_RDWR, 0644, 1);
 
   if (sem_atend == SEM_FAILED) {
     sem_unlink("/sem_atend");
-    sem_atend = sem_open("/sem_atend", O_CREAT | O_RDWR);
+    sem_atend = sem_open("/sem_atend", O_CREAT | O_RDWR, 0644, 1);
     assert(sem_atend != SEM_FAILED &&
            "failed to create named semaphore for atend");
   }
@@ -74,12 +74,12 @@ int main(int argc, char *argv[]) {
   Reception *reception = create_new_reception(
       arguments.number_of_clients, arguments.max_number_of_processes,
       arguments.path_to_client_process, scheduler, &sem_scheduler,
-      arguments.patience_in_us);
+      arguments.patience_in_ms * 1000);
 
   printf("Creating attendant...\n");
   Attendant *attendant = create_attendant(
       scheduler, analyst_pid, arguments.path_to_lng_file,
-      arguments.patience_in_us, &sem_scheduler, sem_block, sem_atend);
+      arguments.patience_in_ms * 1000, &sem_scheduler, sem_block, sem_atend);
 
   printf("Creating service...\n");
   Service *service = create_new_service(reception, attendant);
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 
   printf("Service PID: %d\n", service_pid);
   if (arguments.number_of_clients == 0)
-    printf("Send 's' to /proc/%d/fd/0 to stop the service", service_pid);
+    printf("Send 's' to /proc/%d/fd/0 to stop the service\n", service_pid);
 
   printf("Waiting for service to finish processing all clients...\n");
   int service_status;

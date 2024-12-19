@@ -18,6 +18,10 @@ Service *create_new_service(Reception *reception, Attendant *attendant) {
   return service;
 };
 
+// client_stream_ended:
+// - 0 = the stream still flowing
+// - 1 = the stream has ended, process the remaining queue items
+// - 2 = the stream has ended, stop now
 atomic_int client_stream_ended = ATOMIC_VAR_INIT(0);
 
 pid_t start_service_process(Service *self) {
@@ -34,6 +38,13 @@ pid_t start_service_process(Service *self) {
 
     int join_status2 = pthread_join(attendant_thread, NULL);
     assert(join_status2 != -1 && "failed to join attendant thread on service");
+
+    printf("Number of clients atended: %u\n", self->attendant->attended_count);
+    printf("Satisfied: %u\n", self->attendant->satisfied_count);
+
+    double satisfaction_rate = ((double)self->attendant->satisfied_count) /
+                               ((double)self->attendant->attended_count);
+    printf("Satisfaction rate: %f\n", satisfaction_rate);
 
     exit(EXIT_SUCCESS);
   }

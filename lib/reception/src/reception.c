@@ -3,6 +3,7 @@
 #include "scheduler/include/edf.h"
 #include "utils/include/time.h"
 #include <assert.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdint.h>
@@ -63,8 +64,7 @@ ClientProcess *create_client_process(Reception *self) {
 Reception *create_new_reception(uint64_t number_of_clients,
                                 uint8_t max_number_of_processes,
                                 char *path_to_client_process, EDF *scheduler,
-                                sem_t *sem_scheduler,
-                                useconds_t patience_usec) {
+                                sem_t *sem_scheduler, long patience_usec) {
   assert(number_of_clients >= 0 &&
          "number of clients should be greater than or equal to 0");
   assert(max_number_of_processes >= 1 &&
@@ -110,6 +110,26 @@ void *thread_wrapper(void *ptr) {
 }
 
 extern atomic_int client_stream_ended;
+atomic_int stop_reception = ATOMIC_VAR_INIT(0);
+
+void *input_thread(void *arg) {
+  Reception *r_args = (Reception *)arg;
+
+  while (1) {
+    char input;
+    input = getchar();
+
+    if (input == 's' || input == 'S') {
+      atomic_store(&stop_reception, 1);
+      break;
+    }
+
+    while (getchar() != '\n')
+      ;
+  }
+
+  return NULL;
+}
 
 void start_reception(Reception *self) {
   if (self->mode == Batch) {
@@ -122,15 +142,19 @@ void start_reception(Reception *self) {
 
       self->number_of_clients--;
     }
-
+    atomic_store(&client_stream_ended, 1);
   } else {
-    while (getchar() != 's') {
+    pthread_t t;
+    int thread_status = pthread_create(&t, NULL, input_thread, (void *)self);
+    assert(thread_status == 0 && "failed to input thread");
+
+    while (!atomic_load(&stop_reception)) {
       while (self->scheduler->size == EDF_MAX_ITEMS)
         continue;
       add_new_client_process(self);
     }
+    atomic_store(&client_stream_ended, 2);
   }
-  atomic_store(&client_stream_ended, 1);
 };
 
 pthread_t spawn_reception_thread(Reception *self) {
