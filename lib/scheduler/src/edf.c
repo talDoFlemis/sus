@@ -3,7 +3,7 @@
 #include "limits.h"
 #include "stdio.h"
 #include "stdlib.h"
-#include "sys/time.h"
+#include "utils/include/time.h"
 #include <assert.h>
 
 EDF *create_edf() {
@@ -14,8 +14,7 @@ EDF *create_edf() {
 }
 
 long priority_rank(ClientProcess *client, const long patience_usec) {
-  long started_usec =
-      (client->ts.tv_sec * 1000000) + (client->ts.tv_nsec / 1000);
+  long started_usec = (client->ts.tv_sec * 1000000) + client->ts.tv_usec;
   long deadline;
   switch (client->priority) {
   case High:
@@ -26,7 +25,7 @@ long priority_rank(ClientProcess *client, const long patience_usec) {
     break;
   }
   struct timeval tv;
-  gettimeofday(&tv, NULL);
+  get_now(&tv);
   long curr_time_usec = (tv.tv_sec * 1000000) + tv.tv_usec;
   long time_to_deadline = curr_time_usec - deadline;
   if (time_to_deadline < client->time_to_attend) {

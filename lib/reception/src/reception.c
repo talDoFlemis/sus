@@ -63,8 +63,7 @@ ClientProcess *create_client_process(Reception *self) {
 Reception *create_new_reception(uint64_t number_of_clients,
                                 uint8_t max_number_of_processes,
                                 char *path_to_client_process, EDF *scheduler,
-                                sem_t *sem_scheduler,
-                                useconds_t patience_usec) {
+                                sem_t *sem_scheduler, long patience_usec) {
   assert(number_of_clients >= 0 &&
          "number of clients should be greater than or equal to 0");
   assert(max_number_of_processes >= 1 &&

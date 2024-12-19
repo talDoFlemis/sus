@@ -1,5 +1,6 @@
 #include "attendant/include/attendant.h"
 #include "client/include/client.h"
+#include "utils/include/time.h"
 #include <assert.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -51,14 +52,11 @@ void attend_client(Attendant *att, ClientProcess *client,
   ++att->attended_count;
 
   // calculate satisfaction
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  long curr_time_usec = (tv.tv_sec * 1000000) + tv.tv_usec;
-  long started_usec =
-      (client->ts.tv_sec * 1000000) + (client->ts.tv_nsec / 1000);
-  long time_span = curr_time_usec - started_usec;
+  long time_span = elapsed_time_until_now(client->ts);
+  printf("time_span: %ld | patience_usec %ld\n", time_span, patience_usec);
   if (time_span <= patience_usec) {
     ++att->satisfied_count;
+    printf("new count: %u\n", att->satisfied_count);
   }
 
   sem_post(att->sem_atend);
@@ -71,12 +69,12 @@ extern atomic_int client_stream_ended;
 
 void start_attedant(Attendant *att) {
   while (1) {
-      printf("before lock\n");
+    printf("before lock\n");
     // get next client in the scheduler
     sem_wait(att->sem_scheduler);
     ClientProcess *client = dequeue(att->scheduler, att->patience_usec);
     sem_post(att->sem_scheduler);
-      printf("after lock\n");
+    printf("after lock\n");
 
     int atomic_flag = atomic_load(&client_stream_ended);
     if (atomic_flag == 2 || (client == NULL && atomic_flag == 1)) {

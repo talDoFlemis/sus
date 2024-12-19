@@ -19,13 +19,13 @@ typedef struct Reception {
   char *path_to_client_process;
   EDF *scheduler;
   sem_t *sem_scheduler;
-  useconds_t patience_usec;
+  long patience_usec;
 } Reception;
 
 Reception *create_new_reception(uint64_t number_of_clients,
                                 uint8_t max_number_of_processes,
                                 char *path_to_client_process, EDF *scheduler,
-                                sem_t *sem_scheduler, useconds_t patience_usec);
+                                sem_t *sem_scheduler, long patience_usec);
 
 void start_reception(Reception *self);
 

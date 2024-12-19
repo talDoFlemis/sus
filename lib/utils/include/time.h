@@ -2,14 +2,13 @@
 
 #define TIME_H
 
-#include <stdint.h>
-#include <time.h>
+#include <sys/time.h>
 
 // Get current time in a monotonic clock
-void get_now(struct timespec *ts);
+void get_now(struct timeval *ts);
 // Elapsed time in nanoseconds
-uint64_t elapsed_time(struct timespec start, struct timespec end);
+long elapsed_time(struct timeval start, struct timeval end);
 // Elapsed time in nanoseconds until now
-uint64_t elapsed_time_until_now(struct timespec start);
+long elapsed_time_until_now(struct timeval start);
 
 #endif // !TIME_H

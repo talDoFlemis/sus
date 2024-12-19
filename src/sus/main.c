@@ -105,6 +105,8 @@ int main(int argc, char *argv[]) {
          "us\n",
          elapsed_time_in_usec);
 
+  printf("satisfied: %u\n", attendant->satisfied_count);
+
   struct rusage usage;
   getrusage(RUSAGE_SELF, &usage);
 
