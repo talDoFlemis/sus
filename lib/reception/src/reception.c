@@ -114,6 +114,10 @@ extern atomic_int client_stream_ended;
 void start_reception(Reception *self) {
   if (self->mode == Batch) {
     while (self->number_of_clients != 0) {
+
+      while (self->scheduler->size == EDF_MAX_ITEMS)
+        continue;
+
       add_new_client_process(self);
 
       self->number_of_clients--;
@@ -121,6 +125,8 @@ void start_reception(Reception *self) {
 
   } else {
     while (getchar() != 's') {
+      while (self->scheduler->size == EDF_MAX_ITEMS)
+        continue;
       add_new_client_process(self);
     }
   }
