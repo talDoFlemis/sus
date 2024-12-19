@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
                             char *lng_file_path, unsigned long patience_usec,
@@ -33,6 +34,8 @@ Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
 
 void attend_client(Attendant *att, ClientProcess *client,
                    const long patience_usec) {
+  assert(client != NULL && "attending null client");
+
   // execute client
   kill(client->pid, SIGCONT);
   sem_wait(att->sem_atend);
@@ -79,11 +82,20 @@ void start_attedant(Attendant *att) {
         kill(att->analyst_pid, SIGCONT);
       }
 
+      // Wait for analyst to finish processing
+      int analyst_status;
+      waitpid(att->analyst_pid, &analyst_status, 0);
+      assert(WIFEXITED(analyst_status) == 1 && "analyst didn't exit normally");
+      assert(WEXITSTATUS(analyst_status) == EXIT_SUCCESS &&
+             "analyst didn't exit with success");
+
       fclose(att->lng_file);
       sem_close(att->sem_block);
       sem_close(att->sem_atend);
       sem_close(att->sem_scheduler);
       exit(0);
+    } else if (client == NULL) {
+      continue;
     } else {
       attend_client(att, client, att->patience_usec);
       // at each 10 clients...
