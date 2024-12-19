@@ -49,11 +49,11 @@ int main(int argc, char *argv[]) {
   assert(sem_block != SEM_FAILED && "failed to create semaphore for block");
 
   printf("Creating named semaphore for block...\n");
-  sem_t *sem_atend = sem_open("/sem_atend", O_RDWR, 0644, 1);
+  sem_t *sem_atend = sem_open("/sem_atend", O_RDWR);
 
   if (sem_atend == SEM_FAILED) {
     sem_unlink("/sem_atend");
-    sem_atend = sem_open("/sem_atend", O_CREAT | O_RDWR, 0644, 1);
+    sem_atend = sem_open("/sem_atend", O_CREAT | O_RDWR);
     assert(sem_atend != SEM_FAILED &&
            "failed to create named semaphore for atend");
   }

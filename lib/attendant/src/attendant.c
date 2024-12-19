@@ -87,14 +87,6 @@ void start_attedant(Attendant *att) {
         kill(att->analyst_pid, SIGCONT);
       }
 
-      // Wait for analyst to finish processing
-      int analyst_status;
-      waitpid(att->analyst_pid, &analyst_status, 0);
-      printf("Analyst exit status: %d\n", analyst_status);
-      assert(WIFEXITED(analyst_status) == 1 && "analyst didn't exit normally");
-      assert(WEXITSTATUS(analyst_status) == EXIT_SUCCESS &&
-             "analyst didn't exit with success");
-
       fclose(att->lng_file);
       sem_close(att->sem_block);
       sem_close(att->sem_atend);
