@@ -61,11 +61,11 @@ pid_t create_analyst_process(Analyst *self) {
 
   // Child process
   if (pid == 0) {
-    int output_fd = open("analyst.output", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    assert(output_fd > 0 && "failed to open output fd");
+    // int output_fd = open("analyst.output", O_WRONLY | O_CREAT | O_TRUNC,
+    // 0644); assert(output_fd > 0 && "failed to open output fd");
 
-    int dup_status = dup2(output_fd, STDOUT_FILENO);
-    assert(dup_status > 0 && "failed to redirect stdout");
+    // int dup_status = dup2(output_fd, STDOUT_FILENO);
+    // assert(dup_status > 0 && "failed to redirect stdout");
 
     start_analyst(self);
     exit(EXIT_SUCCESS);

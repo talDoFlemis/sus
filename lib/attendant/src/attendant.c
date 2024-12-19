@@ -29,6 +29,8 @@ Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
   att->satisfied_count = 0;
   att->lng_file = lng_file;
   att->patience_usec = patience_usec;
+
+  sem_post(att->sem_atend);
   return att;
 }
 
@@ -86,6 +88,7 @@ void start_attedant(Attendant *att) {
       // Wait for analyst to finish processing
       int analyst_status;
       waitpid(att->analyst_pid, &analyst_status, 0);
+      printf("Analyst exit status: %d\n", analyst_status);
       assert(WIFEXITED(analyst_status) == 1 && "analyst didn't exit normally");
       assert(WEXITSTATUS(analyst_status) == EXIT_SUCCESS &&
              "analyst didn't exit with success");
