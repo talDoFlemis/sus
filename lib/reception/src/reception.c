@@ -4,6 +4,7 @@
 #include "utils/include/time.h"
 #include <assert.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -108,6 +109,8 @@ void *thread_wrapper(void *ptr) {
   return NULL;
 }
 
+extern atomic_int client_stream_ended;
+
 void start_reception(Reception *self) {
   if (self->mode == Batch) {
     while (self->number_of_clients != 0) {
@@ -120,7 +123,8 @@ void start_reception(Reception *self) {
     while (getchar() != 's') {
       add_new_client_process(self);
     }
-  };
+  }
+  atomic_store(&client_stream_ended, 1);
 };
 
 pthread_t spawn_reception_thread(Reception *self) {

@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 
 const char *attendant_semaphore_path = "/sem_atend";
@@ -16,6 +17,8 @@ Service *create_new_service(Reception *reception, Attendant *attendant) {
   service->attendant = attendant;
   return service;
 };
+
+atomic_int client_stream_ended = ATOMIC_VAR_INIT(0);
 
 pid_t start_service_process(Service *self) {
   pid_t pid = fork();
