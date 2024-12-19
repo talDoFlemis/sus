@@ -29,6 +29,7 @@ Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
   att->satisfied_count = 0;
   att->lng_file = lng_file;
   att->patience_usec = patience_usec;
+  att->analyst_pid = analist_pid;
 
   sem_post(att->sem_atend);
   return att;
@@ -73,6 +74,7 @@ void start_attedant(Attendant *att) {
     sem_post(att->sem_scheduler);
 
     int atomic_flag = atomic_load(&client_stream_ended);
+    printf("analyst pid %d\n", att->analyst_pid);
     if (atomic_flag == 2 || (client == NULL && atomic_flag == 1)) {
       // if received a sigterm and all clients have been attended.
       if (att->pid_buffer_size > 0) {
