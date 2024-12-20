@@ -52,7 +52,11 @@ void attend_client(Attendant *att, ClientProcess *client,
 
   // calculate satisfaction
   long time_span = elapsed_time_until_now(client->ts);
-  if (time_span <= patience_usec) {
+  long client_patience = patience_usec;
+  if (client->priority == High) {
+    client_patience /= 2;
+  }
+  if (time_span <= client_patience) {
     ++att->satisfied_count;
   }
 
