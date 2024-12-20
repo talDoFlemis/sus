@@ -4,6 +4,7 @@
 #include "stdlib.h"
 #include "utils/include/time.h"
 #include <assert.h>
+#include <limits.h>
 
 EDF *create_edf() {
   EDF *edf = malloc(sizeof(EDF));
@@ -26,7 +27,10 @@ long priority_rank(ClientProcess *client, const long patience_usec) {
   struct timeval tv;
   get_now(&tv);
   long curr_time_usec = (tv.tv_sec * 1000000) + tv.tv_usec;
-  long time_to_deadline = curr_time_usec - deadline;
+  long time_to_deadline = deadline - curr_time_usec;
+  if (time_to_deadline <= client->time_to_attend) {
+    return LONG_MAX;
+  }
   return time_to_deadline;
 }
 
