@@ -23,8 +23,12 @@ Service *create_new_service(Reception *reception, Attendant *attendant) {
 // - 1 = the stream has ended, process the remaining queue items
 // - 2 = the stream has ended, stop now
 atomic_int client_stream_ended = ATOMIC_VAR_INIT(0);
+pthread_mutex_t scheduler_mutex;
 
 pid_t start_service_process(Service *self) {
+  int mutex_result = pthread_mutex_init(&scheduler_mutex, NULL);
+  assert(mutex_result == 0 && "Failed to create queue mutex");
+
   pid_t pid = fork();
   assert(pid >= 0 && "failed to spawn service process");
 
@@ -38,6 +42,9 @@ pid_t start_service_process(Service *self) {
 
     int join_status2 = pthread_join(attendant_thread, NULL);
     assert(join_status2 != -1 && "failed to join attendant thread on service");
+
+    int destroy_result = pthread_mutex_destroy(&scheduler_mutex);
+    assert(destroy_result == 0 && "Failed to create queue mutex");
 
     printf("Number of clients atended: %u\n", self->attendant->attended_count);
     printf("Satisfied: %u\n", self->attendant->satisfied_count);

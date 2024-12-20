@@ -6,7 +6,6 @@
 #include "stdio.h"
 
 typedef struct {
-  sem_t *sem_scheduler;
   sem_t *sem_atend;
   sem_t *sem_block;
   EDF *scheduler;
@@ -21,8 +20,7 @@ typedef struct {
 
 Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
                             char *lng_file_path, unsigned long patience_usec,
-                            sem_t *sem_scheduler, sem_t *sem_block,
-                            sem_t *sem_atend);
+                            sem_t *sem_block, sem_t *sem_atend);
 
 void start_attedant(Attendant *att);
 

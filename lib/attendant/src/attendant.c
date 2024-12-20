@@ -12,17 +12,18 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 
+extern atomic_int client_stream_ended;
+extern pthread_mutex_t scheduler_mutex;
+
 Attendant *create_attendant(EDF *scheduler, pid_t analist_pid,
                             char *lng_file_path, unsigned long patience_usec,
-                            sem_t *sem_scheduler, sem_t *sem_block,
-                            sem_t *sem_atend) {
+                            sem_t *sem_block, sem_t *sem_atend) {
   Attendant *att = malloc(sizeof(Attendant));
   assert(att != NULL && "failed to allocate memory for attendant");
 
   FILE *lng_file = fopen(lng_file_path, "w");
   assert(lng_file != NULL && "failed to open lng file");
 
-  att->sem_scheduler = sem_scheduler;
   att->sem_atend = sem_atend;
   att->sem_block = sem_block;
   att->scheduler = scheduler;
@@ -66,14 +67,12 @@ void attend_client(Attendant *att, ClientProcess *client,
   free(client);
 }
 
-extern atomic_int client_stream_ended;
-
 void start_attedant(Attendant *att) {
   while (1) {
     // get next client in the scheduler
-    sem_wait(att->sem_scheduler);
+    pthread_mutex_lock(&scheduler_mutex);
     ClientProcess *client = dequeue(att->scheduler, att->patience_usec);
-    sem_post(att->sem_scheduler);
+    pthread_mutex_unlock(&scheduler_mutex);
 
     int atomic_flag = atomic_load(&client_stream_ended);
     if (atomic_flag == 2 || (client == NULL && atomic_flag == 1)) {
@@ -91,7 +90,6 @@ void start_attedant(Attendant *att) {
       fclose(att->lng_file);
       sem_close(att->sem_block);
       sem_close(att->sem_atend);
-      sem_close(att->sem_scheduler);
       break;
     } else if (client == NULL) {
       continue;

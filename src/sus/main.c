@@ -36,11 +36,6 @@ int main(int argc, char *argv[]) {
          arguments.max_number_of_int_to_read);
 
   printf("Creating unamed semaphores...\n");
-  sem_t sem_scheduler;
-  sem_init(&sem_scheduler, 0, 1);
-  assert(&sem_scheduler != SEM_FAILED &&
-         "failed to create semaphore for scheduler");
-
   sem_t *sem_block = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE,
                           MAP_SHARED | MAP_ANONYMOUS, -1, 0);
   assert(sem_block != MAP_FAILED &&
@@ -73,13 +68,13 @@ int main(int argc, char *argv[]) {
   printf("Creating reception...\n");
   Reception *reception = create_new_reception(
       arguments.number_of_clients, arguments.max_number_of_processes,
-      arguments.path_to_client_process, scheduler, &sem_scheduler,
+      arguments.path_to_client_process, scheduler,
       arguments.patience_in_ms * 1000);
 
   printf("Creating attendant...\n");
-  Attendant *attendant = create_attendant(
-      scheduler, analyst_pid, arguments.path_to_lng_file,
-      arguments.patience_in_ms * 1000, &sem_scheduler, sem_block, sem_atend);
+  Attendant *attendant =
+      create_attendant(scheduler, analyst_pid, arguments.path_to_lng_file,
+                       arguments.patience_in_ms * 1000, sem_block, sem_atend);
 
   printf("Creating service...\n");
   Service *service = create_new_service(reception, attendant);
@@ -119,7 +114,6 @@ int main(int argc, char *argv[]) {
   printf("Involuntary context switches: %ld times\n", usage.ru_nivcsw);
 
   printf("Destroying semaphores...\n");
-  sem_destroy(&sem_scheduler);
   sem_destroy(sem_block);
   sem_close(sem_atend);
   sem_unlink("/sem_atend");

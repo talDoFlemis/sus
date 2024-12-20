@@ -13,6 +13,10 @@
 #include <time.h>
 #include <unistd.h>
 
+extern atomic_int client_stream_ended;
+extern pthread_mutex_t scheduler_mutex;
+atomic_int stop_reception = ATOMIC_VAR_INIT(0);
+
 ClientProcess *create_client_process(Reception *self) {
   int random_number = (double)rand() / (double)RAND_MAX;
   ClientPriority client_priority;
@@ -64,7 +68,7 @@ ClientProcess *create_client_process(Reception *self) {
 Reception *create_new_reception(uint64_t number_of_clients,
                                 uint8_t max_number_of_processes,
                                 char *path_to_client_process, EDF *scheduler,
-                                sem_t *sem_scheduler, long patience_usec) {
+                                long patience_usec) {
   assert(number_of_clients >= 0 &&
          "number of clients should be greater than or equal to 0");
   assert(max_number_of_processes >= 1 &&
@@ -88,19 +92,18 @@ Reception *create_new_reception(uint64_t number_of_clients,
   reception->mode = mode;
   reception->path_to_client_process = path_to_client_process;
   reception->scheduler = scheduler;
-  reception->sem_scheduler = sem_scheduler;
   reception->patience_usec = patience_usec;
 
   return reception;
 };
 
 void add_new_client_process(Reception *self) {
-  sem_wait(self->sem_scheduler);
+  pthread_mutex_lock(&scheduler_mutex);
 
   ClientProcess *client_process = create_client_process(self);
   insert(self->scheduler, client_process, self->patience_usec);
 
-  sem_post(self->sem_scheduler);
+  pthread_mutex_unlock(&scheduler_mutex);
 }
 
 void *thread_wrapper(void *ptr) {
@@ -108,9 +111,6 @@ void *thread_wrapper(void *ptr) {
   start_reception(self);
   return NULL;
 }
-
-extern atomic_int client_stream_ended;
-atomic_int stop_reception = ATOMIC_VAR_INIT(0);
 
 void *input_thread(void *arg) {
   Reception *r_args = (Reception *)arg;
