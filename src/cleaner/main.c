@@ -8,7 +8,6 @@ int main() {
   printf("Cleaning up semaphores...\n");
   sem_unlink("/sem_atend");
   sem_unlink("/sem_block");
-  sem_unlink("/sem_scheduler");
 
   printf("Cleaning up demand file...\n");
   remove("demanda.txt");
