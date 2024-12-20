@@ -100,19 +100,6 @@ int main(int argc, char *argv[]) {
          "us\n",
          elapsed_time_in_usec);
 
-  struct rusage usage;
-  getrusage(RUSAGE_SELF, &usage);
-
-  double user_time = usage.ru_utime.tv_sec + usage.ru_utime.tv_usec / 1e6;
-  double system_time = usage.ru_stime.tv_sec + usage.ru_stime.tv_usec / 1e6;
-
-  printf("Time in user mode: %.6f s\n", user_time);
-  printf("Time in kernel mode: %.6f s\n", system_time);
-  printf("Block output operations: %ld times\n", usage.ru_oublock);
-  printf("Page faults: %ld times\n", usage.ru_majflt);
-  printf("Voluntary context switches: %ld times\n", usage.ru_nvcsw);
-  printf("Involuntary context switches: %ld times\n", usage.ru_nivcsw);
-
   printf("Destroying semaphores...\n");
   sem_destroy(sem_block);
   sem_close(sem_atend);
